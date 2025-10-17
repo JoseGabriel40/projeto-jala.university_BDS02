@@ -29,6 +29,27 @@ app.get('/api/books', (req, res) => {
   });
 });
 
+// GET: Busca livros por nome (novo endpoint)
+app.get('/api/books/search', (req, res) => {
+  const { query } = req.query;
+  if (!query) {
+    res.status(400).json({ error: 'Parâmetro de busca é obrigatório' });
+    return;
+  }
+  db.all(
+    'SELECT id, title, author, available FROM books WHERE title LIKE ? OR author LIKE ?',
+    [`%${query}%`, `%${query}%`],
+    (err, rows) => {
+      if (err) {
+        console.error('Erro ao buscar livros:', err.message);
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json(rows);
+    }
+  );
+});
+
 // POST: Cria um novo livro
 app.post('/api/books', (req, res) => {
   const { title, author, publisher, year, isbn, category, quantity } = req.body;
@@ -64,6 +85,27 @@ app.get('/api/users', (req, res) => {
     }
     res.json(rows); // Retorna lista de usuários como JSON
   });
+});
+
+// GET: Busca usuários por nome (novo endpoint)
+app.get('/api/users/search', (req, res) => {
+  const { query } = req.query;
+  if (!query) {
+    res.status(400).json({ error: 'Parâmetro de busca é obrigatório' });
+    return;
+  }
+  db.all(
+    'SELECT id, name, year, class, course FROM users WHERE name LIKE ?',
+    [`%${query}%`],
+    (err, rows) => {
+      if (err) {
+        console.error('Erro ao buscar usuários:', err.message);
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json(rows);
+    }
+  );
 });
 
 // POST: Cria um novo usuário
