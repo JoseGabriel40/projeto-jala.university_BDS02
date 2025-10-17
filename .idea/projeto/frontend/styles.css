@@ -471,3 +471,55 @@ tr:hover {
 .tab-content.active {
   display: block; /* Exibe conteúdo da aba ativa */
 }
+
+/* Adicione no final do arquivo styles.css */
+
+/* Filtros de busca */
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.btn-sm:hover {
+    transform: translateY(-1px);
+}
+
+/* Botões de ação na tabela */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-action {
+    padding: 6px 12px;
+    font-size: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-return {
+    background: #28a745;
+    color: white;
+}
+
+.btn-return:hover {
+    background: #218838;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
