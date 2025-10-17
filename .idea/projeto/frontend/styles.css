@@ -1,0 +1,473 @@
+/* Variáveis CSS para manter consistência em cores, tamanhos e animações */
+:root {
+  --primary: #4361ee; /* Cor primária (azul) usada em botões e destaques */
+  --secondary: #3a0ca3; /* Cor secundária (azul escuro) para hover */
+  --success: #4cc9f0; /* Cor para sucesso (azul claro) */
+  --danger: #f72585; /* Cor para erro/ação crítica (rosa) */
+  --warning: #f8961e; /* Cor para aviso (laranja) */
+  --info: #4895ef; /* Cor para informação (azul médio) */
+  --light: #f8f9fa; /* Cor clara para fundos (cinza claro) */
+  --dark: #212529; /* Cor escura para textos e sidebar (quase preto) */
+  --gray: #6c757d; /* Cor cinza para textos secundários */
+  --border-radius: 8px; /* Raio de borda padrão para elementos arredondados */
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra padrão para cards e containers */
+  --transition: all 0.3s ease; /* Transição suave para animações */
+}
+
+/* Reset CSS para remover margens/paddings padrão e garantir consistência */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Inclui padding e borda no cálculo de tamanho */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte moderna e legível */
+}
+
+/* Estilo do corpo da página */
+body {
+  background-color: #f5f7fa; /* Fundo cinza claro para contraste suave */
+  color: var(--dark); /* Cor do texto principal */
+  line-height: 1.6; /* Espaçamento entre linhas para legibilidade */
+}
+
+/* Container principal que usa flexbox para layout */
+.app-container {
+  display: flex; /* Organiza sidebar e conteúdo principal lado a lado */
+  min-height: 100vh; /* Garante que ocupe toda a altura da viewport */
+}
+
+/* Estilo da barra lateral (sidebar) */
+.sidebar {
+  width: 250px; /* Largura fixa para a sidebar */
+  background: var(--dark); /* Fundo escuro */
+  color: white; /* Texto branco para contraste */
+  padding: 20px 0; /* Espaçamento interno vertical */
+  transition: var(--transition); /* Transição suave para mudanças (ex: hover) */
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* Sombra à direita para profundidade */
+}
+
+/* Cabeçalho da sidebar */
+.sidebar-header {
+  padding: 0 20px 20px; /* Espaçamento interno */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Linha divisória sutil */
+  display: flex; /* Alinha ícone e título horizontalmente */
+  align-items: center; /* Centraliza verticalmente */
+  gap: 10px; /* Espaço entre ícone e título */
+}
+
+.sidebar-header h2 {
+  color: white; /* Texto branco */
+  font-size: 1.5rem; /* Tamanho da fonte */
+  margin: 0; /* Remove margem padrão */
+}
+
+.library-icon {
+  font-size: 24px; /* Tamanho do ícone da biblioteca */
+}
+
+/* Menu de navegação */
+.nav-menu {
+  list-style: none; /* Remove marcadores de lista */
+  margin-top: 20px; /* Espaço superior para separar do cabeçalho */
+}
+
+.nav-item {
+  padding: 12px 20px; /* Espaçamento interno */
+  transition: var(--transition); /* Transição suave para hover/active */
+  cursor: pointer; /* Cursor de ponteiro para indicar clicabilidade */
+  display: flex; /* Alinha ícone e texto */
+  align-items: center; /* Centraliza verticalmente */
+  gap: 10px; /* Espaço entre ícone e texto */
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Fundo claro ao passar o mouse */
+}
+
+.nav-item.active {
+  background-color: var(--primary); /* Fundo azul para item ativo */
+}
+
+.nav-icon {
+  width: 20px; /* Largura fixa para ícones */
+  text-align: center; /* Centraliza ícones */
+}
+
+/* Conteúdo principal */
+.main-content {
+  flex: 1; /* Ocupa todo o espaço restante */
+  padding: 20px; /* Espaçamento interno */
+  overflow-y: auto; /* Rolagem vertical se o conteúdo for longo */
+}
+
+/* Cabeçalho do conteúdo principal */
+.header {
+  display: flex; /* Alinha título e informações do usuário */
+  justify-content: space-between; /* Espaço entre elementos */
+  align-items: center; /* Centraliza verticalmente */
+  margin-bottom: 30px; /* Espaço inferior */
+  padding-bottom: 15px; /* Espaço interno inferior */
+  border-bottom: 1px solid #dee2e6; /* Linha divisória */
+}
+
+/* Informações do usuário */
+.user-info {
+  display: flex; /* Alinha avatar, nome e botão */
+  align-items: center; /* Centraliza verticalmente */
+  gap: 10px; /* Espaço entre elementos */
+}
+
+.user-avatar {
+  width: 40px; /* Largura do avatar */
+  height: 40px; /* Altura do avatar */
+  border-radius: 50%; /* Forma circular */
+  background-color: var(--primary); /* Fundo azul */
+  color: white; /* Texto branco */
+  display: flex; /* Centraliza letra */
+  align-items: center;
+  justify-content: center;
+  font-weight: bold; /* Letra em negrito */
+}
+
+/* Estilo genérico para botões */
+.btn {
+  padding: 10px 20px; /* Espaçamento interno */
+  border: none; /* Remove borda padrão */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+  cursor: pointer; /* Cursor de ponteiro */
+  transition: var(--transition); /* Transição suave para hover */
+  font-weight: 500; /* Peso da fonte */
+  display: inline-flex; /* Alinha ícone e texto */
+  align-items: center; /* Centraliza verticalmente */
+  gap: 8px; /* Espaço entre ícone e texto */
+}
+
+.btn-primary {
+  background-color: var(--primary); /* Fundo azul */
+  color: white; /* Texto branco */
+}
+
+.btn-primary:hover {
+  background-color: var(--secondary); /* Azul escuro ao passar o mouse */
+  transform: translateY(-2px); /* Efeito de elevação */
+}
+
+.btn-danger {
+  background-color: var(--danger); /* Fundo rosa */
+  color: white; /* Texto branco */
+}
+
+.btn-danger:hover {
+  background-color: #e01a58; /* Rosa mais escuro ao passar o mouse */
+}
+
+.btn-success {
+  background-color: var(--success); /* Fundo azul claro */
+  color: white; /* Texto branco */
+}
+
+/* Cards do dashboard */
+.dashboard-cards {
+  display: grid; /* Usa grid para layout responsivo */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Colunas adaptáveis */
+  gap: 20px; /* Espaço entre cards */
+  margin-bottom: 30px; /* Espaço inferior */
+}
+
+.card {
+  background: white; /* Fundo branco */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+  padding: 20px; /* Espaçamento interno */
+  box-shadow: var(--shadow); /* Sombra padrão */
+  transition: var(--transition); /* Transição suave */
+}
+
+.card:hover {
+  transform: translateY(-5px); /* Efeito de elevação ao passar o mouse */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); /* Sombra mais intensa */
+}
+
+.card-header {
+  display: flex; /* Alinha título e ícone */
+  justify-content: space-between; /* Espaço entre elementos */
+  align-items: center; /* Centraliza verticalmente */
+  margin-bottom: 15px; /* Espaço inferior */
+}
+
+.card-icon {
+  font-size: 2rem; /* Tamanho do ícone */
+  color: var(--primary); /* Cor azul */
+}
+
+.card-value {
+  font-size: 2rem; /* Tamanho da fonte */
+  font-weight: bold; /* Negrito */
+  color: var(--dark); /* Cor escura */
+  margin: 10px 0; /* Margem vertical */
+}
+
+.card-label {
+  color: var(--gray); /* Cor cinza */
+  font-size: 0.9rem; /* Tamanho menor para texto secundário */
+}
+
+/* Container de tabelas */
+.table-container {
+  background: white; /* Fundo branco */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+  padding: 20px; /* Espaçamento interno */
+  box-shadow: var(--shadow); /* Sombra padrão */
+  overflow-x: auto; /* Rolagem horizontal para tabelas largas */
+  margin-bottom: 20px; /* Espaço inferior */
+}
+
+.table-header {
+  display: flex; /* Alinha título e botão */
+  justify-content: space-between; /* Espaço entre elementos */
+  align-items: center; /* Centraliza verticalmente */
+  margin-bottom: 15px; /* Espaço inferior */
+}
+
+table {
+  width: 100%; /* Ocupa toda a largura */
+  border-collapse: collapse; /* Remove espaços entre células */
+}
+
+th, td {
+  padding: 12px 15px; /* Espaçamento interno */
+  text-align: left; /* Alinhamento à esquerda */
+  border-bottom: 1px solid #dee2e6; /* Linha divisória */
+}
+
+th {
+  background-color: #f8f9fa; /* Fundo cinza claro */
+  font-weight: 600; /* Peso da fonte */
+  color: var(--dark); /* Cor escura */
+}
+
+tr:hover {
+  background-color: #f8f9fa; /* Fundo claro ao passar o mouse */
+}
+
+/* Estilo para badges (indicadores de status) */
+.badge {
+  padding: 5px 10px; /* Espaçamento interno */
+  border-radius: 20px; /* Bordas arredondadas */
+  font-size: 0.8rem; /* Tamanho menor */
+  font-weight: 500; /* Peso da fonte */
+}
+
+.badge-success {
+  background-color: #d4edda; /* Fundo verde claro */
+  color: #155724; /* Texto verde escuro */
+}
+
+.badge-warning {
+  background-color: #fff3cd; /* Fundo amarelo claro */
+  color: #856404; /* Texto amarelo escuro */
+}
+
+.badge-danger {
+  background-color: #f8d7da; /* Fundo rosa claro */
+  color: #721c24; /* Texto rosa escuro */
+}
+
+/* Container de formulários */
+.form-container {
+  background: white; /* Fundo branco */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+  padding: 20px; /* Espaçamento interno */
+  box-shadow: var(--shadow); /* Sombra padrão */
+  margin-bottom: 20px; /* Espaço inferior */
+}
+
+.form-grid {
+  display: grid; /* Usa grid para layout responsivo */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Colunas adaptáveis */
+  gap: 20px; /* Espaço entre campos */
+}
+
+.form-group {
+  margin-bottom: 20px; /* Espaço inferior */
+}
+
+.form-label {
+  display: block; /* Exibe como bloco */
+  margin-bottom: 5px; /* Espaço inferior */
+  font-weight: 500; /* Peso da fonte */
+  color: var(--dark); /* Cor escura */
+}
+
+.form-control {
+  width: 100%; /* Ocupa toda a largura */
+  padding: 10px; /* Espaçamento interno */
+  border: 1px solid #ced4da; /* Borda cinza */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+  transition: var(--transition); /* Transição suave */
+  font-size: 1rem; /* Tamanho da fonte */
+}
+
+.form-control:focus {
+  border-color: var(--primary); /* Borda azul ao focar */
+  outline: none; /* Remove contorno padrão */
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2); /* Sombra azul suave */
+}
+
+.form-actions {
+  display: flex; /* Alinha botões */
+  gap: 10px; /* Espaço entre botões */
+  margin-top: 20px; /* Espaço superior */
+}
+
+/* Estilo do modal */
+.modal-overlay {
+  position: fixed; /* Posicionamento fixo na tela */
+  top: 0; left: 0; right: 0; bottom: 0; /* Ocupa toda a tela */
+  background: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
+  display: none; /* Escondido por padrão */
+  justify-content: center; /* Centraliza horizontalmente */
+  align-items: center; /* Centraliza verticalmente */
+  z-index: 1000; /* Camada superior */
+  backdrop-filter: blur(5px); /* Efeito de desfoque no fundo */
+}
+
+.modal {
+  background: white; /* Fundo branco */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+  padding: 20px; /* Espaçamento interno */
+  width: 90%; /* Largura máxima */
+  max-width: 600px; /* Limite de largura */
+  max-height: 90vh; /* Limite de altura */
+  overflow-y: auto; /* Rolagem vertical se necessário */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Sombra intensa */
+}
+
+.modal-header {
+  display: flex; /* Alinha título e botão de fechar */
+  justify-content: space-between; /* Espaço entre elementos */
+  align-items: center; /* Centraliza verticalmente */
+  margin-bottom: 20px; /* Espaço inferior */
+  padding-bottom: 10px; /* Espaço interno inferior */
+  border-bottom: 1px solid #dee2e6; /* Linha divisória */
+}
+
+.modal-close {
+  background: none; /* Sem fundo */
+  border: none; /* Sem borda */
+  font-size: 1.5rem; /* Tamanho do ícone de fechar */
+  cursor: pointer; /* Cursor de ponteiro */
+  color: var(--gray); /* Cor cinza */
+}
+
+/* Campo de busca */
+.search-box {
+  display: flex; /* Alinha campo e resultados */
+  gap: 10px; /* Espaço entre elementos */
+  margin-bottom: 20px; /* Espaço inferior */
+  position: relative; /* Para posicionar resultados abaixo */
+}
+
+.search-input {
+  flex: 1; /* Ocupa espaço disponível */
+  padding: 10px; /* Espaçamento interno */
+  border: 1px solid #ced4da; /* Borda cinza */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+}
+
+/* Resultados de busca */
+.search-results {
+  display: none; /* Escondido por padrão */
+  position: absolute; /* Posicionado abaixo do campo */
+  background: white; /* Fundo branco */
+  border: 1px solid #ced4da; /* Borda cinza */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+  width: 100%; /* Ocupa largura do campo */
+  max-height: 200px; /* Altura máxima com rolagem */
+  overflow-y: auto; /* Rolagem vertical */
+  box-shadow: var(--shadow); /* Sombra padrão */
+  z-index: 10; /* Camada acima do conteúdo */
+  top: 40px; /* Distância do campo de busca */
+}
+
+.search-results.active {
+  display: block; /* Exibe quando ativo */
+}
+
+.search-result-item {
+  padding: 10px; /* Espaçamento interno */
+  cursor: pointer; /* Cursor de ponteiro */
+}
+
+.search-result-item:hover {
+  background-color: #f8f9fa; /* Fundo claro ao passar o mouse */
+}
+
+/* Container de gráficos (não usado no momento) */
+.chart-container {
+  background: white; /* Fundo branco */
+  border-radius: var(--border-radius); /* Bordas arredondadas */
+  padding: 20px; /* Espaçamento interno */
+  box-shadow: var(--shadow); /* Sombra padrão */
+  margin-bottom: 20px; /* Espaço inferior */
+}
+
+/* Responsividade para telas menores (máximo 768px) */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column; /* Empilha sidebar e conteúdo */
+  }
+
+  .sidebar {
+    width: 100%; /* Ocupa toda a largura */
+    height: auto; /* Altura automática */
+  }
+
+  .dashboard-cards {
+    grid-template-columns: 1fr; /* Uma coluna por card */
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr; /* Uma coluna por campo */
+  }
+
+  .filter-group {
+    flex-direction: column; /* Empilha filtros */
+  }
+}
+
+/* Animação de fade-in para elementos */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); } /* Início: invisível e deslocado */
+  to { opacity: 1; transform: translateY(0); } /* Fim: visível na posição original */
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease forwards; /* Aplica animação com duração de 0.5s */
+}
+
+/* Estilo para abas (tabs) */
+.tabs {
+  display: flex; /* Alinha abas horizontalmente */
+  border-bottom: 1px solid #dee2e6; /* Linha divisória */
+  margin-bottom: 20px; /* Espaço inferior */
+}
+
+.tab {
+  padding: 10px 20px; /* Espaçamento interno */
+  cursor: pointer; /* Cursor de ponteiro */
+  border-bottom: 3px solid transparent; /* Borda inferior invisível por padrão */
+  transition: var(--transition); /* Transição suave */
+}
+
+.tab.active {
+  border-bottom-color: var(--primary); /* Borda azul para aba ativa */
+  color: var(--primary); /* Cor azul */
+  font-weight: 500; /* Peso da fonte */
+}
+
+.tab-content {
+  display: none; /* Esconde conteúdo por padrão */
+}
+
+.tab-content.active {
+  display: block; /* Exibe conteúdo da aba ativa */
+}

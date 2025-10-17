@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- Define a codificação de caracteres como UTF-8 para suportar acentos e caracteres especiais -->
+  <meta charset="UTF-8">
+  <!-- Configura a responsividade para dispositivos móveis, ajustando a escala inicial -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Título da página exibido na aba do navegador -->
+  <title>Sistema de Biblioteca - Web</title>
+  <!-- Link para o arquivo CSS externo que estiliza a interface -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- Container principal que organiza a barra lateral e o conteúdo usando flexbox -->
+<div class="app-container">
+  <!-- Sidebar: Barra lateral com menu de navegação -->
+  <div class="sidebar">
+    <!-- Cabeçalho da sidebar com ícone e título -->
+    <div class="sidebar-header">
+      <div class="library-icon">📚</div>
+      <h2>Biblioteca Web</h2>
+    </div>
+    <!-- Lista de itens de navegação, cada um associado a uma aba via data-tab -->
+    <ul class="nav-menu">
+      <li class="nav-item active" data-tab="dashboard">
+        <div class="nav-icon">📊</div>
+        <span>Dashboard</span>
+      </li>
+      <li class="nav-item" data-tab="books">
+        <div class="nav-icon">📖</div>
+        <span>Livros</span>
+      </li>
+      <li class="nav-item" data-tab="users">
+        <div class="nav-icon">👥</div>
+        <span>Usuários</span>
+      </li>
+      <li class="nav-item" data-tab="loans">
+        <div class="nav-icon">🔖</div>
+        <span>Empréstimos</span>
+      </li>
+      <li class="nav-item" data-tab="reports">
+        <div class="nav-icon">📈</div>
+        <span>Relatórios</span>
+      </li>
+      <li class="nav-item" data-tab="settings">
+        <div class="nav-icon">⚙️</div>
+        <span>Configurações</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Conteúdo principal da aplicação -->
+  <div class="main-content">
+    <!-- Cabeçalho com título dinâmico e informações do usuário -->
+    <div class="header">
+      <h1 id="section-title">Dashboard</h1>
+      <div class="user-info">
+        <!-- Avatar do usuário (inicial do administrador) -->
+        <div class="user-avatar">A</div>
+        <span>Administrador</span>
+        <!-- Botão de logout com ícone -->
+        <button class="btn btn-danger" id="logoutBtn">
+          <span>🚪</span>
+          Sair
+        </button>
+      </div>
+    </div>
+
+    <!-- Seção Dashboard (ativa por padrão) -->
+    <div class="tab-content active" id="dashboard">
+      <!-- Cards de estatísticas -->
+      <div class="dashboard-cards">
+        <!-- Card de livros cadastrados -->
+        <div class="card fade-in">
+          <div class="card-header">
+            <span class="card-label">Livros Cadastrados</span>
+            <span class="card-icon">📚</span>
+          </div>
+          <div class="card-value" id="booksCount">0</div>
+          <div class="card-label">Total no sistema</div>
+        </div>
+        <!-- Card de empréstimos ativos -->
+        <div class="card fade-in">
+          <div class="card-header">
+            <span class="card-label">Empréstimos Ativos</span>
+            <span class="card-icon">🔖</span>
+          </div>
+          <div class="card-value" id="loansCount">0</div>
+          <div class="card-label">Em andamento</div>
+        </div>
+        <!-- Card de usuários cadastrados -->
+        <div class="card fade-in">
+          <div class="card-header">
+            <span class="card-label">Usuários Cadastrados</span>
+            <span class="card-icon">👥</span>
+          </div>
+          <div class="card-value" id="usersCount">0</div>
+          <div class="card-label">Alunos e funcionários</div>
+        </div>
+        <!-- Card de devoluções pendentes -->
+        <div class="card fade-in">
+          <div class="card-header">
+            <span class="card-label">Devoluções Pendentes</span>
+            <span class="card-icon">⏱️</span>
+          </div>
+          <div class="card-value" id="pendingReturns">0</div>
+          <div class="card-label">Com atraso</div>
+        </div>
+      </div>
+
+      <!-- Tabela de empréstimos recentes -->
+      <div class="table-container fade-in">
+        <div class="table-header">
+          <h2>Empréstimos Recentes</h2>
+          <!-- Botão para abrir modal de novo empréstimo -->
+          <button class="btn btn-primary" id="newLoanBtn">
+            <span>➕</span>
+            Novo Empréstimo
+          </button>
+        </div>
+        <table>
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuário</th>
+            <th>Livro</th>
+            <th>Data Empréstimo</th>
+            <th>Data Devolução</th>
+            <th>Status</th>
+          </tr>
+          </thead>
+          <tbody id="loanTableBody">
+          <!-- Dados preenchidos via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Seção de Livros -->
+    <div class="tab-content" id="books">
+      <!-- Campo de busca para livros -->
+      <div class="search-box">
+        <input type="text" class="search-input" id="bookSearch" placeholder="Pesquisar livro...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <!-- Formulário para cadastro de livros -->
+      <div class="form-container fade-in">
+        <h2>Cadastrar Novo Livro</h2>
+        <form id="bookForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Título</label>
+              <input type="text" class="form-control" placeholder="Digite o título do livro">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Autor</label>
+              <input type="text" class="form-control" placeholder="Digite o nome do autor">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Editora</label>
+              <input type="text" class="form-control" placeholder="Digite a editora">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ano de Publicação</label>
+              <input type="number" class="form-control" placeholder="Digite o ano">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ISBN</label>
+              <input type="text" class="form-control" placeholder="Digite o ISBN">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categoria</label>
+              <select class="form-control">
+                <option value="">Selecione uma categoria</option>
+                <option value="literatura">Literatura</option>
+                <option value="ciencia">Ciência</option>
+                <option value="tecnologia">Tecnologia</option>
+                <option value="historia">História</option>
+                <option value="ficcao">Ficção</option>
+                <option value="nao-ficcao">Não Ficção</option>
+                <option value="biografia">Biografia</option>
+                <option value="poesia">Poesia</option>
+                <option value="autoajuda">Autoajuda</option>
+                <option value="infantil">Infantil</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Quantidade</label>
+              <input type="number" class="form-control" placeholder="Digite a quantidade">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="reset" class="btn btn-danger">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Seção de Usuários -->
+    <div class="tab-content" id="users">
+      <!-- Campo de busca para usuários -->
+      <div class="search-box">
+        <input type="text" class="search-input" id="userSearch" placeholder="Pesquisar usuário...">
+        <div class="search-results" id="userSearchResults"></div>
+      </div>
+      <!-- Formulário para cadastro de usuários -->
+      <div class="form-container fade-in">
+        <h2>Cadastrar Novo Usuário</h2>
+        <form id="userForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Nome</label>
+              <input type="text" class="form-control" placeholder="Digite o nome">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ano</label>
+              <input type="number" class="form-control" placeholder="Digite o ano">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Turma</label>
+              <input type="text" class="form-control" placeholder="Digite a turma">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Curso</label>
+              <select class="form-control">
+                <option value="">Selecione um curso</option>
+                <option value="redes">Redes</option>
+                <option value="desenvolvimento">Desenvolvimento</option>
+                <option value="zootecnia">Zootecnia</option>
+                <option value="enfermagem">Enfermagem</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="reset" class="btn btn-danger">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Seção de Empréstimos -->
+    <div class="tab-content" id="loans">
+      <p>Conteúdo de Empréstimos (em desenvolvimento)</p>
+    </div>
+
+    <!-- Seção de Relatórios -->
+    <div class="tab-content" id="reports">
+      <p>Conteúdo de Relatórios (em desenvolvimento)</p>
+    </div>
+
+    <!-- Seção de Configurações -->
+    <div class="tab-content" id="settings">
+      <p>Conteúdo de Configurações (em desenvolvimento)</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para registrar novo empréstimo -->
+<div class="modal-overlay" id="loanModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Novo Empréstimo</h2>
+      <!-- Botão para fechar o modal -->
+      <button class="modal-close" id="closeModal">&times;</button>
+    </div>
+    <form id="loanForm">
+      <div class="form-group">
+        <label class="form-label">ID do Usuário</label>
+        <input type="text" class="form-control" placeholder="Digite o ID do usuário" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ID do Livro</label>
+        <input type="text" class="form-control" placeholder="Digite o ID do livro" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data de Devolução Prevista</label>
+        <input type="date" class="form-control" required>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Link para o arquivo JavaScript externo -->
+<script src="script.js"></script>
+</body>
+</html>
