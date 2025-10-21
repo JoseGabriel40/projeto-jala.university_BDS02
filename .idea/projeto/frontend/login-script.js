@@ -67,44 +67,70 @@ if (currentPageIsLogin) {
         });
       }
 
-      // --- Lógica de Cadastro Público ---
+      // --- Lógica de Cadastro Público (Simplificada) ---
 
       // Abertura e Fechamento do Modal
-      document.getElementById('openRegisterModal').addEventListener('click', () => {
-        registerModal.style.display = 'flex';
-      });
-      document.getElementById('closeRegisterModal').addEventListener('click', () => {
-        registerModal.style.display = 'none';
-      });
-      registerModal.addEventListener('click', (e) => {
-        if (e.target.id === 'registerModal') registerModal.style.display = 'none';
-      });
+      const openModalBtn = document.getElementById('openRegisterModal');
+      const closeModalBtn = document.getElementById('closeRegisterModal');
 
-      // Submissão do Formulário de Cadastro
-      document.getElementById('registerForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const formData = Object.fromEntries(new FormData(this).entries());
+      if (openModalBtn) {
+        openModalBtn.addEventListener('click', () => {
+          registerModal.style.display = 'flex';
+        });
+      }
 
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-          });
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+          registerModal.style.display = 'none';
+        });
+      }
 
-          const data = await response.json();
+      if (registerModal) {
+        registerModal.addEventListener('click', (e) => {
+          if (e.target.id === 'registerModal') registerModal.style.display = 'none';
+        });
+      }
 
-          if (response.ok) {
-            alert(data.message);
-            registerModal.style.display = 'none';
-            document.getElementById('loginForm').reset();
-          } else {
-            alert(data.error || 'Falha ao cadastrar usuário.');
+      // Submissão do Formulário de Cadastro (agora envia apenas email e password)
+      const registerForm = document.getElementById('registerForm');
+      if (registerForm) {
+        registerForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          // Captura apenas email e password
+          const email = registerForm.elements['email'].value;
+          const password = registerForm.elements['password'].value;
+
+          const formData = { email, password };
+
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              // Substituído alert() por console.log, conforme regras de usabilidade
+              console.log(data.message);
+              registerModal.style.display = 'none';
+              document.getElementById('loginForm').reset();
+
+              // Opcional: pré-preencher o login com o novo email
+              document.getElementById('loginEmail').value = email;
+            } else {
+              console.error(data.error || 'Falha ao cadastrar usuário.');
+              // Usar um feedback visual em vez de alert() em um app real
+              alert(data.error || 'Falha ao cadastrar usuário. Verifique se o e-mail já está em uso.');
+            }
+          } catch (error) {
+            console.error('Erro de conexão ao tentar cadastrar:', error);
+            alert('Erro de conexão ao tentar cadastrar.');
           }
-        } catch (error) {
-          alert('Erro de conexão ao tentar cadastrar.');
-        }
-      });
+        });
+      }
     });
   }
 } else {

@@ -132,23 +132,31 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// POST /api/register: Rota pública para cadastro de novos usuários COMUNS (Usa transação em 2 tabelas)
+// POST /api/register: Rota pública para cadastro de novos usuários COMUNS (Insere somente o essencial e credenciais)
 app.post('/api/register', async (req, res) => {
-  const { name, email, password, year, class: turma, course } = req.body;
+  // Apenas email e senha são necessários para o cadastro público simplificado
+  const { email, password } = req.body;
 
-  if (!name || !email || !password || !turma || !course) {
-    return res.status(400).json({ error: 'Todos os campos obrigatórios devem ser preenchidos.' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email e senha são obrigatórios para cadastro.' });
   }
 
   const role = 'common';
 
+  // Define valores mínimos ou placeholders para os campos da tabela 'users'
+  // Nota: O campo 'name' no login/frontend é importante, por isso usamos o prefixo do email.
+  const placeholderName = email.split('@')[0];
+  const defaultYear = 0; // Usar 0 ou NULL, dependendo do schema da DB. 0 é seguro para int.
+  const defaultClass = 'Aguardando Cadastro';
+  const defaultCourse = 'Aguardando Cadastro';
+
   try {
     await sql.query('BEGIN'); // Inicia transação
 
-    // 1. Insere dados na tabela users
+    // 1. Insere dados MÍNIMOS na tabela users para obter um ID válido
     const userResult = await sql`
       INSERT INTO users (name, year, class, course)
-      VALUES (${name}, ${year}, ${turma}, ${course})
+      VALUES (${placeholderName}, ${defaultYear}, ${defaultClass}, ${defaultCourse})
         RETURNING id, name
     `;
     const newUserId = userResult[0].id;
