@@ -1,17 +1,39 @@
-// database.js: Configuração e Exportação da Conexão com o Banco de Dados Neon (PostgreSQL)
+// database/connection.js: Configuração e Exportação da Conexão MySQL
 
-// Importa o módulo para carregar variáveis de ambiente (ex: DATABASE_URL) do arquivo .env
-require('dotenv').config();
+const mysql = require('mysql2/promise');
 
-// Importa o driver serverless do Neon para conexões PostgreSQL baseadas em HTTP/WS
-const { neon } = require('@neondatabase/serverless');
+// Configurações conforme solicitado
+const dbConfig = {
+  host: 'localhost',
+  user: 'root',
+  password: '1234',
+  database: 'biblioteca',
+};
 
-// 1. Inicializa a Conexão Neon
-// A função neon() recebe a URL de conexão do ambiente (process.env.DATABASE_URL)
-const sql = neon(process.env.DATABASE_URL);
+/**
+ * Cria um pool de conexões MySQL para gerenciar a concorrência de forma eficiente.
+ * Usamos 'promise' para ter suporte nativo a async/await.
+ */
+const pool = mysql.createPool(dbConfig);
 
-// 2. Exporta o objeto de conexão
-// A lógica de inicialização de tabelas e dados foi movida para server.js.
+// Exporta a função para executar queries
 module.exports = {
-  sql,
+  query: async (sql, params = []) => {
+    // Usar 'try/finally' para liberar a conexão é mais seguro,
+    // mas o 'pool.query' já lida com a liberação automaticamente.
+    try {
+      // O pool.query retorna [results, fields]
+      const [rows] = await pool.query(sql, params);
+      return rows;
+    } catch (error) {
+      console.error('ERRO DE QUERY MySQL:', error.message);
+      // Rejeita a promessa para que o server.js possa capturar e tratar
+      throw error;
+    }
+  },
+
+  // Método para iniciar uma transação, obtendo uma conexão
+  getConnection: async () => {
+    return pool.getConnection();
+  }
 };
