@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Biblioteca Web</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Estilos específicos para a centralização da tela de login */
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: var(--primary);
+    }
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+    /* Estilos do modal (opcional, mas recomendado) */
+    .modal {
+      max-height: 80vh; /* Limita a altura do modal de cadastro */
+      overflow-y: auto; /* Adiciona rolagem se o conteúdo for grande */
+    }
+    .register-link {
+      cursor: pointer;
+      color: var(--primary);
+      text-decoration: underline;
+      font-size: 0.9em;
+      margin-top: 10px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<div class="login-container">
+  <h2>📚 Login</h2>
+  <form id="loginForm">
+    <div class="form-group">
+      <input type="email" class="form-control" id="loginEmail" placeholder="Email" required>
+    </div>
+    <div class="form-group">
+      <input type="password" class="form-control" id="loginPassword" placeholder="Senha" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Entrar</button>
+  </form>
+  <div id="loginMessage" class="login-message"></div>
+
+  <span id="openRegisterModal" class="register-link">Não tem conta? Cadastre-se aqui.</span>
+
+</div>
+
+<div class="modal-overlay" id="registerModal">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h2>Cadastro de Usuário Comum</h2>
+      <button class="modal-close" id="closeRegisterModal">&times;</button>
+    </div>
+    <form id="registerForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nome Completo</label>
+          <input type="text" class="form-control" name="name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email (Será seu Login)</label>
+          <input type="email" class="form-control" name="email" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" class="form-control" name="password" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ano</label>
+          <input type="number" class="form-control" name="year" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Turma</label>
+          <input type="text" class="form-control" name="class" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Curso</label>
+          <select class="form-control" name="course" required>
+            <option value="">Selecione um curso</option>
+            <option value="redes">Redes</option>
+            <option value="desenvolvimento">Desenvolvimento</option>
+            <option value="zootecnia">Zootecnia</option>
+            <option value="enfermagem">Enfermagem</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top: 20px;">
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="login-script.js"></script>
+</body>
+</html>
