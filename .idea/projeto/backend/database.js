@@ -1,105 +1,105 @@
-// database.js - Configuração do banco de dados SQLite
+// database.js - Configuração do banco de dados PostgreSQL (Supabase)
+const { Pool } = require('pg');
 
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
 
-// Cria/conecta ao banco de dados
-const db = new sqlite3.Database(path.join(__dirname, 'biblioteca.db'), (err) => {
-  if (err) {
-    console.error('Erro ao conectar ao banco de dados:', err.message);
-  } else {
-    console.log('Conectado ao banco de dados SQLite');
-    initDatabase();
-  }
+
+require('dotenv').config();
+const pool = new Pool({
+  host: process.env.SUPABASE_HOST,
+  user: process.env.SUPABASE_USER,
+  password: process.env.SUPABASE_PASSWORD,
+  database: process.env.SUPABASE_DB,
+  port: 5432,
+  ssl: { rejectUnauthorized: false },
+  family: 4 // ⚠️ força IPv4
 });
 
-// Inicializa as tabelas do banco
-function initDatabase() {
-  // Tabela de livros
-  db.run(`
-    CREATE TABLE IF NOT EXISTS books (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      author TEXT NOT NULL,
-      publisher TEXT,
-      year INTEGER,
-      isbn TEXT,
-      category TEXT,
-      quantity INTEGER DEFAULT 1,
-      available BOOLEAN DEFAULT 1
-    )
-  `, (err) => {
-    if (err) console.error('Erro ao criar tabela books:', err.message);
-    else console.log('Tabela books verificada/criada');
+pool.connect()
+  .then(() => {
+    console.log('✅ Conectado ao banco de dados Supabase (PostgreSQL)');
+    initDatabase();
+  })
+  .catch(err => {
+    console.error('❌ Erro ao conectar ao banco:', err.message);
   });
 
-  // Tabela de usuários
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      year INTEGER,
-      class TEXT,
-      course TEXT
-    )
-  `, (err) => {
-    if (err) console.error('Erro ao criar tabela users:', err.message);
-    else console.log('Tabela users verificada/criada');
-  });
+// Cria tabelas e insere dados iniciais (só na primeira execução)
+async function initDatabase() {
+  try {
+    // Cria tabelas se não existirem
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS books (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL,
+        publisher TEXT,
+        year INTEGER,
+        isbn TEXT,
+        category TEXT,
+        quantity INTEGER DEFAULT 1,
+        available BOOLEAN DEFAULT TRUE
+      );
+    `);
 
-  // Tabela de empréstimos
-  db.run(`
-    CREATE TABLE IF NOT EXISTS loans (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      book_id INTEGER NOT NULL,
-      loan_date TEXT DEFAULT (date('now')),
-      return_date TEXT,
-      status TEXT DEFAULT 'Em andamento',
-      FOREIGN KEY (user_id) REFERENCES users(id),
-      FOREIGN KEY (book_id) REFERENCES books(id)
-    )
-  `, (err) => {
-    if (err) console.error('Erro ao criar tabela loans:', err.message);
-    else console.log('Tabela loans verificada/criada');
-  });
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        year INTEGER,
+        class TEXT,
+        course TEXT
+      );
+    `);
 
-  // Insere dados de exemplo (apenas se as tabelas estiverem vazias)
-  db.get('SELECT COUNT(*) as count FROM books', (err, row) => {
-    if (!err && row.count === 0) {
-      console.log('Inserindo dados de exemplo...');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS loans (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        book_id INTEGER NOT NULL REFERENCES books(id),
+        loan_date DATE DEFAULT CURRENT_DATE,
+        return_date DATE,
+        status TEXT DEFAULT 'Em andamento'
+      );
+    `);
 
-      // Livros de exemplo
+    console.log('🗂️ Tabelas verificadas/criadas com sucesso');
+
+    // Verifica se há dados
+    const { rows } = await pool.query('SELECT COUNT(*) AS count FROM books');
+    if (parseInt(rows[0].count) === 0) {
+      console.log('📚 Inserindo dados de exemplo...');
+
       const books = [
         ['Dom Casmurro', 'Machado de Assis', 'Editora Globo', 1899, '978-8525406552', 'Literatura', 3],
         ['O Cortiço', 'Aluísio Azevedo', 'Editora Ática', 1890, '978-8508117346', 'Literatura', 2],
         ['Memórias Póstumas de Brás Cubas', 'Machado de Assis', 'Editora Nova Fronteira', 1881, '978-8520925683', 'Literatura', 2]
       ];
 
-      books.forEach(book => {
-        db.run(
-          'INSERT INTO books (title, author, publisher, year, isbn, category, quantity) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          book
-        );
-      });
+      for (const book of books) {
+        await pool.query(`
+          INSERT INTO books (title, author, publisher, year, isbn, category, quantity)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, book);
+      }
 
-      // Usuários de exemplo
       const users = [
         ['João Silva', 2023, '3A', 'Desenvolvimento'],
         ['Maria Santos', 2023, '2B', 'Redes'],
         ['Pedro Costa', 2023, '1C', 'Enfermagem']
       ];
 
-      users.forEach(user => {
-        db.run(
-          'INSERT INTO users (name, year, class, course) VALUES (?, ?, ?, ?)',
-          user
-        );
-      });
+      for (const user of users) {
+        await pool.query(`
+          INSERT INTO users (name, year, class, course)
+          VALUES ($1, $2, $3, $4)
+        `, user);
+      }
 
-      console.log('Dados de exemplo inseridos!');
+      console.log('✅ Dados de exemplo inseridos com sucesso!');
     }
-  });
+  } catch (err) {
+    console.error('Erro na inicialização do banco:', err.message);
+  }
 }
 
-module.exports = db;
+module.exports = pool;
