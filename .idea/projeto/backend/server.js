@@ -1,5 +1,5 @@
 // server.js: Servidor Express com APIs RESTful para o Sistema de Biblioteca
-// Contém a lógica do servidor, middlewares de autenticação, CRUD e inicialização do DB.
+// Contém a lógica do servidor, middlewares de autenticação e rotas.
 
 // Importa o framework web Express para criar o servidor e rotas
 const express = require('express');
@@ -67,6 +67,7 @@ async function calculateFine(returnDate, loanStatus) {
     return 0;
   }
 
+  // Assume que a tabela settings já existe e está populada
   const settings = await sql`SELECT fine_per_day FROM settings WHERE id = 1`;
   if (settings.length === 0) return 0;
 
@@ -83,111 +84,14 @@ async function calculateFine(returnDate, loanStatus) {
   return 0;
 }
 
-// Função de inicialização: Cria tabelas e insere dados iniciais no banco
-async function initializeDatabaseAndData() {
-  try {
-    console.log('⏳ Inicializando estrutura do banco...');
 
-    // --- Criação de tabelas (PostgreSQL DDL) ---
-    await sql.query(`
-            CREATE TABLE IF NOT EXISTS books (
-                id SERIAL PRIMARY KEY,
-                title TEXT NOT NULL,
-                author TEXT NOT NULL,
-                publisher TEXT,
-                year INTEGER,
-                isbn TEXT,
-                category TEXT,
-                quantity INTEGER DEFAULT 1,
-                available BOOLEAN DEFAULT TRUE
-            );
-        `);
-
-    await sql.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                email TEXT UNIQUE,
-                password TEXT NOT NULL,
-                role TEXT NOT NULL DEFAULT 'common',
-                year INTEGER,
-                class TEXT,
-                course TEXT
-            );
-        `);
-
-    // Lógica de migração: Adiciona colunas se estiverem faltando (Corrige o erro de login 42703)
-    try {
-      await sql.query(`ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT '123'`);
-      await sql.query(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'common'`);
-      console.log('🔄 Colunas de autenticação (password, role) reforçadas.');
-    } catch (e) { /* Ignora o erro se as colunas já existirem */ }
-
-
-    await sql.query(`
-            CREATE TABLE IF NOT EXISTS loans (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER NOT NULL REFERENCES users(id),
-                book_id INTEGER NOT NULL REFERENCES books(id),
-                loan_date DATE DEFAULT CURRENT_DATE,
-                return_date DATE,
-                status TEXT DEFAULT 'Em andamento'
-            );
-        `);
-
-    await sql.query(`
-            CREATE TABLE IF NOT EXISTS settings (
-                id INTEGER PRIMARY KEY DEFAULT 1,
-                days_for_return INTEGER DEFAULT 14,
-                fine_per_day NUMERIC(10, 2) DEFAULT 2.00,
-                notification_days INTEGER DEFAULT 2
-            );
-        `);
-
-    console.log('🗂️ Estrutura do banco verificada/criada.');
-
-    // === Inserção de Dados Iniciais (Para Logins e Conteúdo) ===
-    const countUsers = await sql.query('SELECT COUNT(*) AS count FROM users');
-
-    if (parseInt(countUsers[0].count) < 2) {
-      console.log('📚 Inserindo usuários iniciais (Admin e Comum)...');
-
-      await sql`
-                INSERT INTO users (name, email, password, role, year, class, course) VALUES
-                ('Admin Master', 'admin@bib.com', 'admin123', 'admin', 2024, '0A', 'Administracao') ON CONFLICT (email) DO NOTHING,
-                ('João Silva', 'joao.silva@teste.com', '123', 'common', 2023, '3A', 'Desenvolvimento') ON CONFLICT (email) DO NOTHING
-            `;
-    }
-
-    const countBooks = await sql`SELECT COUNT(*) AS count FROM books`;
-    if (parseInt(countBooks[0].count) === 0) {
-      console.log('📚 Inserindo livros de exemplo...');
-      await sql`
-                INSERT INTO books (title, author, publisher, year, isbn, category, quantity) VALUES
-                ('Dom Casmurro', 'Machado de Assis', 'Editora Globo', 1899, '978-8525406552', 'Literatura', 3),
-                ('O Cortiço', 'Aluísio Azevedo', 'Editora Ática', 1890, '978-8508117346', 'Literatura', 2),
-                ('Memórias Póstumas de Brás Cubas', 'Machado de Assis', 'Editora Nova Fronteira', 1881, '978-8520925683', 'Literatura', 2)
-            `;
-    }
-
-    const countSettings = await sql`SELECT COUNT(*) AS count FROM settings`;
-    if (parseInt(countSettings[0].count) === 0) {
-      await sql`
-                INSERT INTO settings (id, days_for_return, fine_per_day, notification_days)
-                VALUES (1, 14, 2.00, 2);
-            `;
-    }
-
-    console.log('✅ Estrutura e dados iniciais prontos.');
-  } catch (err) {
-    console.error('❌ Erro na inicialização do banco de dados:', err.message);
-  }
-}
+// A função initializeDatabaseAndData foi removida.
+// O servidor assume que a estrutura do banco de dados (DDL) já foi aplicada.
 
 
 // === ROTAS DE AUTENTICAÇÃO E CADASTRO (PÚBLICAS) ===
 
-// POST /api/login: Processa o login
+// POST /api/login: Processa o login (Usa JOIN na nova estrutura)
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -195,11 +99,17 @@ app.post('/api/login', async (req, res) => {
   }
 
   try {
+    // Busca credenciais e dados do usuário em uma única consulta (JOIN)
     const result = await sql`
-            SELECT id, name, email, role
-            FROM users
-            WHERE email = ${email} AND password = ${password}
-        `;
+      SELECT
+        u.id,
+        u.name,
+        c.email,
+        c.role
+      FROM credentials c
+             JOIN users u ON c.user_id = u.id
+      WHERE c.email = ${email} AND c.password = ${password}
+    `;
 
     if (result.length === 0) {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
@@ -210,6 +120,7 @@ app.post('/api/login', async (req, res) => {
 
     fake_sessions[token] = { user, timestamp: Date.now() };
 
+    // Retorna os dados necessários para a sessão do frontend
     res.json({
       token,
       message: 'Login bem-sucedido!',
@@ -221,26 +132,46 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// POST /api/register: Rota pública para cadastro de novos usuários COMUNS (NOVO)
+// POST /api/register: Rota pública para cadastro de novos usuários COMUNS (Usa transação em 2 tabelas)
 app.post('/api/register', async (req, res) => {
   const { name, email, password, year, class: turma, course } = req.body;
 
-  // Validação mínima: impede cadastro sem dados essenciais
   if (!name || !email || !password || !turma || !course) {
     return res.status(400).json({ error: 'Todos os campos obrigatórios devem ser preenchidos.' });
   }
 
-  // A role é SEMPRE 'common' nesta rota pública
   const role = 'common';
 
   try {
-    const result = await sql`
-            INSERT INTO users (name, email, password, role, year, class, course)
-            VALUES (${name}, ${email}, ${password}, ${role}, ${year}, ${turma}, ${course})
-            RETURNING id, name, email, role
-        `;
-    res.json({ message: 'Cadastro realizado com sucesso! Você pode fazer login.', user: result[0] });
+    await sql.query('BEGIN'); // Inicia transação
+
+    // 1. Insere dados na tabela users
+    const userResult = await sql`
+      INSERT INTO users (name, year, class, course)
+      VALUES (${name}, ${year}, ${turma}, ${course})
+        RETURNING id, name
+    `;
+    const newUserId = userResult[0].id;
+
+    // 2. Insere dados de login na tabela credentials
+    const credentialsResult = await sql`
+      INSERT INTO credentials (user_id, email, password, role)
+      VALUES (${newUserId}, ${email}, ${password}, ${role})
+        RETURNING email, role
+    `;
+
+    await sql.query('COMMIT'); // Confirma transação
+
+    const newUser = {
+      id: newUserId,
+      name: userResult[0].name,
+      email: credentialsResult[0].email,
+      role: credentialsResult[0].role
+    };
+
+    res.json({ message: 'Cadastro realizado com sucesso! Você pode fazer login.', user: newUser });
   } catch (err) {
+    await sql.query('ROLLBACK'); // Desfaz em caso de erro
     // Erro 23505 (duplicate key) é para e-mail já cadastrado
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Este email já está cadastrado.' });
@@ -264,7 +195,6 @@ app.use('/api', authMiddleware);
 // --- ROTAS PROTEGIDAS (CRUD, Empréstimos, Relatórios, Configurações) ---
 
 app.get('/api/settings', async (req, res) => {
-  // ... (restante do código da rota /api/settings - GET)
   try {
     const settings = await sql.query('SELECT days_for_return, fine_per_day, notification_days FROM settings WHERE id = 1');
     if (settings.length === 0) {
@@ -277,7 +207,6 @@ app.get('/api/settings', async (req, res) => {
 });
 
 app.post('/api/settings', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/settings - POST)
   const { days_for_return, fine_per_day, notification_days } = req.body;
 
   if (days_for_return === undefined || fine_per_day === undefined || notification_days === undefined) {
@@ -286,12 +215,12 @@ app.post('/api/settings', adminMiddleware, async (req, res) => {
 
   try {
     await sql`
-            UPDATE settings
-            SET days_for_return = ${days_for_return},
-                fine_per_day = ${fine_per_day},
-                notification_days = ${notification_days}
-            WHERE id = 1
-        `;
+      UPDATE settings
+      SET days_for_return = ${days_for_return},
+          fine_per_day = ${fine_per_day},
+          notification_days = ${notification_days}
+      WHERE id = 1
+    `;
     res.json({ message: 'Configurações salvas com sucesso!' });
   } catch (err) {
     handleServerError(res, err, 'Erro ao salvar configurações:');
@@ -301,7 +230,6 @@ app.post('/api/settings', adminMiddleware, async (req, res) => {
 
 // --- Livros (CRUD) ---
 app.get('/api/books', async (req, res) => {
-  // ... (restante do código da rota /api/books - GET)
   try {
     const books = await sql.query('SELECT * FROM books ORDER BY id');
     res.json(books);
@@ -311,7 +239,6 @@ app.get('/api/books', async (req, res) => {
 });
 
 app.post('/api/books', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/books - POST)
   const { title, author, publisher, year, isbn, category, quantity } = req.body;
   if (!title || !author || !quantity) {
     return res.status(400).json({ error: 'Título, autor e quantidade são obrigatórios' });
@@ -319,10 +246,10 @@ app.post('/api/books', adminMiddleware, async (req, res) => {
 
   try {
     const result = await sql`
-        INSERT INTO books (title, author, publisher, year, isbn, category, quantity, available)
-        VALUES (${title}, ${author}, ${publisher}, ${year}, ${isbn}, ${category}, ${quantity}, ${quantity > 0})
+      INSERT INTO books (title, author, publisher, year, isbn, category, quantity, available)
+      VALUES (${title}, ${author}, ${publisher}, ${year}, ${isbn}, ${category}, ${quantity}, ${quantity > 0})
         RETURNING *
-        `;
+    `;
     res.json(result[0]);
   } catch (err) {
     handleServerError(res, err, 'Erro ao criar livro:');
@@ -330,7 +257,6 @@ app.post('/api/books', adminMiddleware, async (req, res) => {
 });
 
 app.put('/api/books/:id', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/books - PUT)
   const { id } = req.params;
   const { title, author, publisher, year, isbn, category, quantity } = req.body;
 
@@ -340,18 +266,18 @@ app.put('/api/books/:id', adminMiddleware, async (req, res) => {
 
   try {
     const result = await sql`
-            UPDATE books
-            SET title = ${title},
-                author = ${author},
-                publisher = ${publisher},
-                year = ${year},
-                isbn = ${isbn},
-                category = ${category},
-                quantity = ${quantity},
-                available = ${quantity > 0}
-            WHERE id = ${id}
-            RETURNING *
-        `;
+      UPDATE books
+      SET title = ${title},
+          author = ${author},
+          publisher = ${publisher},
+          year = ${year},
+          isbn = ${isbn},
+          category = ${category},
+          quantity = ${quantity},
+          available = ${quantity > 0}
+      WHERE id = ${id}
+        RETURNING *
+    `;
     if (result.length === 0) {
       return res.status(404).json({ error: 'Livro não encontrado.' });
     }
@@ -362,7 +288,6 @@ app.put('/api/books/:id', adminMiddleware, async (req, res) => {
 });
 
 app.delete('/api/books/:id', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/books - DELETE)
   const { id } = req.params;
   try {
     const activeLoans = await sql`SELECT COUNT(*) FROM loans WHERE book_id = ${id} AND status != 'Devolvido'`;
@@ -379,77 +304,126 @@ app.delete('/api/books/:id', adminMiddleware, async (req, res) => {
 
 
 // --- Usuários (CRUD) ---
+// GET /api/users: (Usa JOIN na nova estrutura)
 app.get('/api/users', async (req, res) => {
-  // ... (restante do código da rota /api/users - GET)
   try {
-    const users = await sql.query('SELECT id, name, email, year, class, course, role FROM users ORDER BY id');
+    const query = `
+      SELECT u.id, u.name, u.year, u.class, u.course, c.email, c.role
+      FROM users u
+             JOIN credentials c ON u.id = c.user_id
+      ORDER BY u.id
+    `;
+    const users = await sql.query(query);
     res.json(users);
   } catch (err) {
     handleServerError(res, err, 'Erro ao listar usuários:');
   }
 });
 
+// POST /api/users: (Usa transação em 2 tabelas)
 app.post('/api/users', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/users - POST)
   const { name, email, password, year, class: turma, course, role } = req.body;
-  if (!name || !email || !password || !turma || !course) {
-    return res.status(400).json({ error: 'Nome, email, senha, turma e curso são obrigatórios' });
-  }
-
-  if (role === 'admin') {
-    const adminCount = await sql`SELECT COUNT(*) FROM users WHERE role = 'admin'`;
-    if (parseInt(adminCount[0].count) > 0) {
-      return res.status(400).json({ error: 'Já existe um administrador. Apenas 1 administrador principal é permitido.' });
-    }
+  if (!name || !email || !password || !turma || !course || !role) {
+    return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
   }
 
   const finalRole = role || 'common';
 
   try {
-    const result = await sql`
-      INSERT INTO users (name, email, password, year, class, course, role)
-      VALUES (${name}, ${email}, ${password}, ${year}, ${turma}, ${course}, ${finalRole})
-      RETURNING id, name, email, role
+    await sql.query('BEGIN'); // Inicia transação
+
+    // 1. Insere na tabela users
+    const userResult = await sql`
+      INSERT INTO users (name, year, class, course)
+      VALUES (${name}, ${year}, ${turma}, ${course})
+        RETURNING id, name, year, class, course
     `;
-    res.json(result[0]);
+    const newUserId = userResult[0].id;
+
+    // 2. Insere na tabela credentials
+    const credentialsResult = await sql`
+      INSERT INTO credentials (user_id, email, password, role)
+      VALUES (${newUserId}, ${email}, ${password}, ${finalRole})
+        RETURNING email, role
+    `;
+
+    await sql.query('COMMIT'); // Confirma transação
+
+    const newUser = {
+      ...userResult[0],
+      email: credentialsResult[0].email,
+      role: credentialsResult[0].role
+    };
+
+    res.json(newUser);
+
   } catch (err) {
+    await sql.query('ROLLBACK'); // Desfaz em caso de erro
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Este email já está cadastrado.' });
+    }
     handleServerError(res, err, 'Erro ao criar usuário:');
   }
 });
 
+// PUT /api/users/:id: (Usa transação em 2 tabelas)
 app.put('/api/users/:id', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/users - PUT)
   const { id } = req.params;
   const { name, email, year, class: turma, course, password, role } = req.body;
 
-  if (!name || !email || !turma || !course) {
-    return res.status(400).json({ error: 'Nome, email, turma e curso são obrigatórios' });
+  if (!name || !email || !turma || !course || !password || !role) {
+    return res.status(400).json({ error: 'Nome, email, senha, turma, curso e papel são obrigatórios' });
   }
 
   try {
-    const result = await sql`
-            UPDATE users
-            SET name = ${name},
-                email = ${email},
-                year = ${year},
-                class = ${turma},
-                course = ${course},
-                password = ${password},
-                role = ${role}
-            WHERE id = ${id}
-            RETURNING id, name, email, role
-        `;
-    if (result.length === 0) {
+    await sql.query('BEGIN'); // Inicia transação
+
+    // 1. Atualiza a tabela users
+    const userUpdateResult = await sql`
+      UPDATE users
+      SET name = ${name},
+          year = ${year},
+          class = ${turma},
+          course = ${course}
+      WHERE id = ${id}
+        RETURNING id, name, year, class, course
+    `;
+
+    if (userUpdateResult.length === 0) {
+      await sql.query('ROLLBACK');
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
-    res.json(result[0]);
+
+    // 2. Atualiza a tabela credentials
+    const credentialsUpdateResult = await sql`
+      UPDATE credentials
+      SET email = ${email},
+          password = ${password},
+          role = ${role}
+      WHERE user_id = ${id}
+        RETURNING email, role
+    `;
+
+    await sql.query('COMMIT'); // Confirma transação
+
+    const updatedUser = {
+      ...userUpdateResult[0],
+      email: credentialsUpdateResult[0].email,
+      role: credentialsUpdateResult[0].role
+    };
+
+    res.json(updatedUser);
   } catch (err) {
+    await sql.query('ROLLBACK'); // Desfaz em caso de erro
+    // Adiciona checagem de email duplicado em caso de update
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Este email já está cadastrado em outro usuário.' });
+    }
     handleServerError(res, err, 'Erro ao atualizar usuário:');
   }
 });
 
 app.delete('/api/users/:id', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/users - DELETE)
   const { id } = req.params;
   try {
     const activeLoans = await sql`SELECT COUNT(*) FROM loans WHERE user_id = ${id} AND status != 'Devolvido'`;
@@ -457,15 +431,19 @@ app.delete('/api/users/:id', adminMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Não é possível excluir usuário com empréstimos ativos.' });
     }
 
+    // Deleta de users. ON DELETE CASCADE em credentials garante a exclusão das credenciais.
+    await sql.query('BEGIN');
     await sql`DELETE FROM users WHERE id = ${id}`;
+    await sql.query('COMMIT');
+
     res.json({ message: 'Usuário excluído com sucesso!' });
   } catch (err) {
+    await sql.query('ROLLBACK');
     handleServerError(res, err, 'Erro ao excluir usuário:');
   }
 });
 
 app.get('/api/users/search-by-name', async (req, res) => {
-  // ... (restante do código da rota /api/users/search-by-name)
   const { query } = req.query;
   if (!query) {
     return res.status(400).json({ error: 'O parâmetro de busca (query) é obrigatório.' });
@@ -473,12 +451,14 @@ app.get('/api/users/search-by-name', async (req, res) => {
 
   try {
     const searchQuery = `%${query}%`;
+    // Usa JOIN com credentials para obter email
     const users = await sql`
-            SELECT id, name, email, class, course
-            FROM users
-            WHERE name ILIKE ${searchQuery}
-            LIMIT 10
-        `;
+      SELECT u.id, u.name, c.email, u.class, u.course
+      FROM users u
+             JOIN credentials c ON u.id = c.user_id
+      WHERE u.name ILIKE ${searchQuery}
+        LIMIT 10
+    `;
     res.json(users);
   } catch (err) {
     handleServerError(res, err, 'Erro ao buscar usuários por nome:');
@@ -488,14 +468,13 @@ app.get('/api/users/search-by-name', async (req, res) => {
 
 // --- Empréstimos, Devolução, Relatórios ---
 app.get('/api/loans', async (req, res) => {
-  // ... (restante do código da rota /api/loans - GET)
   const query = `
-        SELECT l.id, u.name as user, b.title as book, l.loan_date, l.return_date, l.status
-        FROM loans l
-          JOIN users u ON l.user_id = u.id
-          JOIN books b ON l.book_id = b.id
-        ORDER BY l.loan_date DESC
-    `;
+    SELECT l.id, u.name as user, b.title as book, l.loan_date, l.return_date, l.status
+    FROM loans l
+      JOIN users u ON l.user_id = u.id
+      JOIN books b ON l.book_id = b.id
+    ORDER BY l.loan_date DESC
+  `;
   try {
     const loans = await sql.query(query);
 
@@ -523,7 +502,6 @@ app.get('/api/loans', async (req, res) => {
 });
 
 app.post('/api/loans', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/loans - POST)
   const { user_id, book_id, return_date } = req.body;
   if (!user_id || !book_id) {
     return res.status(400).json({ error: 'ID de Usuário e ID de Livro são obrigatórios' });
@@ -550,8 +528,8 @@ app.post('/api/loans', adminMiddleware, async (req, res) => {
     await sql.query('BEGIN');
 
     const bookResult = await sql`
-        SELECT quantity FROM books WHERE id = ${book_id} FOR UPDATE
-        `;
+      SELECT quantity FROM books WHERE id = ${book_id} FOR UPDATE
+    `;
 
     if (bookResult.length === 0 || bookResult[0].quantity < 1) {
       await sql.query('ROLLBACK');
@@ -559,17 +537,17 @@ app.post('/api/loans', adminMiddleware, async (req, res) => {
     }
 
     const loanResult = await sql`
-        INSERT INTO loans (user_id, book_id, return_date, status)
-        VALUES (${user_id}, ${book_id}, ${finalReturnDate}, 'Em andamento')
+      INSERT INTO loans (user_id, book_id, return_date, status)
+      VALUES (${user_id}, ${book_id}, ${finalReturnDate}, 'Em andamento')
         RETURNING id
-        `;
+    `;
 
     await sql`
-        UPDATE books
-        SET quantity = quantity - 1,
-            available = (CASE WHEN quantity - 1 > 0 THEN TRUE ELSE FALSE END)
-        WHERE id = ${book_id}
-        `;
+      UPDATE books
+      SET quantity = quantity - 1,
+          available = (CASE WHEN quantity - 1 > 0 THEN TRUE ELSE FALSE END)
+      WHERE id = ${book_id}
+    `;
 
     await sql.query('COMMIT');
     res.json({ id: loanResult[0].id, message: 'Empréstimo registrado com sucesso!' });
@@ -585,15 +563,14 @@ app.post('/api/loans', adminMiddleware, async (req, res) => {
 });
 
 app.put('/api/loans/return/:id', adminMiddleware, async (req, res) => {
-  // ... (restante do código da rota /api/loans/return/:id - PUT)
   const { id } = req.params;
 
   try {
     await sql.query('BEGIN');
 
     const loanResult = await sql`
-            SELECT book_id, status FROM loans WHERE id = ${id} FOR UPDATE
-        `;
+      SELECT book_id, status FROM loans WHERE id = ${id} FOR UPDATE
+    `;
 
     if (loanResult.length === 0) {
       await sql.query('ROLLBACK');
@@ -608,18 +585,18 @@ app.put('/api/loans/return/:id', adminMiddleware, async (req, res) => {
     }
 
     await sql`
-            UPDATE loans
-            SET status = 'Devolvido',
-                return_date = NOW()::DATE
-            WHERE id = ${id}
-        `;
+      UPDATE loans
+      SET status = 'Devolvido',
+          return_date = NOW()::DATE
+      WHERE id = ${id}
+    `;
 
     await sql`
-            UPDATE books
-            SET quantity = quantity + 1,
-                available = TRUE
-            WHERE id = ${book_id}
-        `;
+      UPDATE books
+      SET quantity = quantity + 1,
+          available = TRUE
+      WHERE id = ${book_id}
+    `;
 
     await sql.query('COMMIT');
     res.json({ message: 'Devolução registrada com sucesso!' });
@@ -635,16 +612,15 @@ app.put('/api/loans/return/:id', adminMiddleware, async (req, res) => {
 
 
 app.get('/api/reports/returned-loans', async (req, res) => {
-  // ... (restante do código da rota /api/reports/returned-loans - GET)
   const { start_date, end_date } = req.query;
 
   let query = `
-        SELECT l.id, u.name AS user, b.title AS book, l.loan_date, l.return_date
-        FROM loans l
-        JOIN users u ON l.user_id = u.id
-        JOIN books b ON l.book_id = b.id
-        WHERE l.status = 'Devolvido'
-    `;
+    SELECT l.id, u.name AS user, b.title AS book, l.loan_date, l.return_date
+    FROM loans l
+      JOIN users u ON l.user_id = u.id
+      JOIN books b ON l.book_id = b.id
+    WHERE l.status = 'Devolvido'
+  `;
   const params = [];
   let paramIndex = 1;
 
@@ -669,10 +645,7 @@ app.get('/api/reports/returned-loans', async (req, res) => {
 
 
 // === Início do Servidor ===
-// 1. Inicializa a estrutura do banco de dados e os dados iniciais
-initializeDatabaseAndData().then(() => {
-  // 2. Inicia o servidor Express na porta definida
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-  });
+// O servidor Express é iniciado diretamente.
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
